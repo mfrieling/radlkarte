@@ -46,8 +46,9 @@ foreach .sbahn_routes -> .sbahn_route {
   	convert node
     	::id = id(),
     	name = u(t["name"]),
-        ref = sbahn_route.u(t["ref"]),
-        colour = sbahn_route.u(t["colour"]);
+      ref = sbahn_route.u(t["ref"]),
+      colour = sbahn_route.u(t["colour"]),
+      uic_ref = u(t["uic_ref"]);
     out meta;
   }
 }""",
