@@ -57,7 +57,8 @@ rkGlobal.configurations = {
   'klagenfurt': {
     title: 'Klagenfurt',
     centerLatLng: L.latLng(46.62, 14.31),
-    nextbikeUrl: 'https://maps.nextbike.net/maps/nextbike.json?domains=ka&bikes=false'
+    nextbikeUrl: 'https://maps.nextbike.net/maps/nextbike.json?domains=ka&bikes=false',
+    partnerShops: true,
   },
   'linz': {
     title: 'Linz',
@@ -80,15 +81,15 @@ rkGlobal.configurations = {
   'wien': {
     title: 'Wien',
     centerLatLng: L.latLng(48.21, 16.37),
-    nextbikeUrl: 'https://maps.nextbike.net/maps/nextbike.json?domains=wr,la&bikes=false',
-  },
+		nextbikeUrl: 'https://maps.nextbike.net/maps/nextbike.json?domains=wr,la&bikes=false',
+	},
 };
 rkGlobal.pageHeader = function () {
   return $('h1');
 }
 
 function debug(obj) {
-  if (rkGlobal.debug) {
+	if (rkGlobal.debug) {
     console.log(obj);
   }
 }
@@ -217,14 +218,14 @@ function loadGeoJson(file) {
       // separate panes to allow setting zIndex, which is not possible on
       // the geojson layers themselves
       // see https://stackoverflow.com/q/39767499/1648538
-      rkGlobal.leafletMap.createPane(key);
-      rkGlobal.leafletMap.getPane(key).style.zIndex = getSegmentZIndex(properties);
-      rkGlobal.segments[key] = {
-        'lines': L.geoJSON(multilinestringFeatures, { pane: key }),
-        'steepLines': properties.steep === 'yes' ? L.geoJSON(multilinestringFeatures, { pane: key }) : undefined,
-        'decorators': L.polylineDecorator(decoratorCoordinates)
-      };
-    }
+			rkGlobal.leafletMap.createPane(key);
+			rkGlobal.leafletMap.getPane(key).style.zIndex = getSegmentZIndex(properties);
+			rkGlobal.segments[key] = {
+				'lines': L.geoJSON(multilinestringFeatures, { pane: key }),
+				'steepLines': properties.steep === 'yes' ? L.geoJSON(multilinestringFeatures, { pane: key }) : undefined,
+				'decorators': L.polylineDecorator(decoratorCoordinates)
+			};
+		}
 
     // apply styles
     rkGlobal.styleFunction();
@@ -328,31 +329,27 @@ function createNextbikeMarkerIncludingPopup(domain, place, cityUrl) {
 
 function createMarkerIncludingPopup(latLng, icon, description, altText) {
   let marker = L.marker(latLng, {
-    icon: icon,
-    alt: altText,
-  });
-  marker.bindPopup(`<article class="tooltip">${description}</article>`, { closeButton: true });
-  marker.on('mouseover', function () {
-    marker.openPopup();
-  });
-  // adding a mouseover event listener causes a problem with touch browsers:
-  // then two taps are required to show the marker.
-  // explicitly adding the click event listener here solves the issue
-  marker.on('click', function () {
-    marker.openPopup();
-  });
-  return marker;
+		icon: icon,
+		alt: altText,
+	});
+	marker.bindPopup(`<article class="tooltip">${description}</article>`, { closeButton: true });
+	marker.on('mouseover', function () { marker.openPopup(); });
+	// adding a mouseover event listener causes a problem with touch browsers:
+	// then two taps are required to show the marker.
+	// explicitly adding the click event listener here solves the issue
+	marker.on('click', function () { marker.openPopup(); });
+	return marker;
 }
 
 /** expects a list of poi types */
 function clearAndLoadOsmPois(types) {
   for (const type of types) {
-    if (type === "transit") {
-      clearAndLoadTransit(rkGlobal.currentRegion);
-    } else {
-      clearAndLoadBasicOsmPoi(type, rkGlobal.currentRegion);
-    }
-  }
+		if (type === "transit") {
+        clearAndLoadTransit(rkGlobal.currentRegion);
+		} else {
+        clearAndLoadBasicOsmPoi(type, rkGlobal.currentRegion);
+		}
+	}
 }
 
 /** special handling for transit because we need to merge subway and railway in one layer */
@@ -402,6 +399,25 @@ async function clearAndLoadTransit(region) {
   }
 }
 
+async function loadBicycleShopPartners(region) {
+  const partners = {};
+  if (rkGlobal.configurations[region].partnerShops === true) {
+    const data = await $.getJSON(`data/${region}-partner-shops.json`);
+    if (data.items.length === 0) {
+      debug(`No Bicycle shop partners loaded for region "${region}"`);
+      return partners;
+    }
+    for (const item of data.items) {
+      if (item.osm_id > 0) {
+        partners[item.osm_id] = item;
+      }
+    }
+  } else {
+    debug(`Bicycle shop partners are not supported for region "${region}"`);
+  }
+  return partners;
+}
+
 async function loadStationName2Line2Colour(region, fileName) {
   const stationName2Line2Colour = {};
   $.getJSON(fileName, function (data) {
@@ -415,8 +431,14 @@ async function loadStationName2Line2Colour(region, fileName) {
   return stationName2Line2Colour;
 }
 
-function clearAndLoadBasicOsmPoi(type, region) {
+async function clearAndLoadBasicOsmPoi(type, region) {
   rkGlobal.poiLayers[type].clearLayers();
+
+  let bicycleShopPartners = {};
+  if (type === "bicycleShop") {
+    bicycleShopPartners = await loadBicycleShopPartners(region);
+  }
+
   let poiFile = "data/osm-overpass/" + region + "-" + type + ".json";
   $.getJSON(poiFile, function (data) {
     let count = 0;
@@ -436,7 +458,15 @@ function clearAndLoadBasicOsmPoi(type, region) {
       }
 
       const name = tags.name;
-      const website = extractWebsiteFromTagSoup(tags);
+
+      let partner = {};
+      let isPartner = false;
+      if (type === "bicycleShop") {
+        partner = bicycleShopPartners[element.id];
+        isPartner = partner?.osm_id === element.id;
+      }
+
+      const website = extractWebsiteFromTagSoup(tags, partner?.url);
       let heading = name != null ? name : rkGlobal.osmPoiTypes[type].name;
       if (website != null) {
         heading = `<a href="${website}" target="_blank">${heading}</a>`;
@@ -448,26 +478,22 @@ function clearAndLoadBasicOsmPoi(type, region) {
         description += `<p>${address}</p>`;
       }
 
-      let currentlyOpen = type === 'bicycleShop' ? false : true;
+      let currentlyOpen = type !== 'bicycleShop';
       let opening_hours_value = tags.opening_hours;
       if (opening_hours_value) {
         if (type === "bicycleShop" && !opening_hours_value.includes("PH")) {
           // bicycle shops are usually closed on holidays but this is rarely mapped
           opening_hours_value += ";PH off";
-        }
-        // NOTE: state left empty because school holidays are likely not relevant (not a single mapped instance in our data set)
-        // noinspection JSPotentiallyInvalidConstructorUsage
-        const oh = new opening_hours(opening_hours_value, {
-          lat: latLng.lat,
-          lon: latLng.lng,
-          address: { country_code: "at", state: "" }
-        });
-        currentlyOpen = oh.getState();
-        const openText = currentlyOpen ? "jetzt geöffnet" : "derzeit geschlossen";
-        let items = oh.prettifyValue({ conf: { locale: 'de' }, }).split(";");
+				}
+				// NOTE: state left empty because school holidays are likely not relevant (not a single mapped instance in our data set)
+				// noinspection JSPotentiallyInvalidConstructorUsage
+				const oh = new opening_hours(opening_hours_value, { lat: latLng.lat, lon: latLng.lng, address: { country_code: "at", state: "" } });
+				currentlyOpen = oh.getState();
+				const openText = currentlyOpen ? "jetzt geöffnet" : "derzeit geschlossen";
+				let items = oh.prettifyValue({ conf: { locale: 'de' }, }).split(";");
 
-        for (let i = 0; i < items.length; i++) {
-          items[i] = items[i].trim();
+				for (let i = 0; i < items.length; i++) {
+					items[i] = items[i].trim();
           if (type === "bicycleShop" && items[i] === "Feiertags geschlossen") {
             // avoid redundant info
             items[i] = "";
@@ -484,6 +510,13 @@ function clearAndLoadBasicOsmPoi(type, region) {
         description += `<p>${phone}</p>`;
       }
 
+      if (isPartner) {
+        const regionName = `Radlobby ${rkGlobal.configurations[region].title}`;
+        let rlPartner = `<img src="css/radlobby.png" alt="${regionName}"><em>Partner der ${regionName}.</em>`
+        rlPartner = partner.rl_url.startsWith('http') ? `<a href="${partner.rl_url}" target="_blank">${rlPartner}</a>` : rlPartner;
+        description += `<p class="rl-partner">${rlPartner}</p>`;
+      }
+
       const operator = tags.operator;
       if (operator) {
         description += `<p class="sidenote">Betreiber: ${operator}</p>`;
@@ -492,7 +525,8 @@ function clearAndLoadBasicOsmPoi(type, region) {
       const osmLink = `<a href="https://www.osm.org/${element.type}/${element.id}" target="_blank">Quelle: OpenStreetMap</a>`;
       description += `<p class="sidenote">${osmLink} (Stand: ${dataDate})</p>`;
 
-      let icon = rkGlobal.icons[`${type}${currentlyOpen ? "" : "Gray"}`];
+      let iconType = type === 'bicycleShop' && isPartner ? 'partnerBicycleShop' : type;
+      let icon = rkGlobal.icons[`${iconType}${currentlyOpen ? "" : "Gray"}`];
       let altText = element.tags.name;
       const markerLayer = createMarkerIncludingPopup(latLng, icon, description, altText);
       if (markerLayer != null) {
@@ -533,8 +567,8 @@ function extractAddressFromTagSoup(tags) {
   return undefined;
 }
 
-function extractWebsiteFromTagSoup(tags) {
-  let website = tags.website != null ? tags.website : tags["contact:website"];
+function extractWebsiteFromTagSoup(tags, url) {
+  let website = url ?? (tags.website != null ? tags.website : tags["contact:website"]);
   if (website == null) {
     return website;
   }
@@ -727,8 +761,8 @@ function getOnewayArrowPatterns(zoom, properties, lineWeight) {
 function loadLeaflet() {
   rkGlobal.leafletMap = L.map('map', { 'zoomControl': false });
 
-  // avoid troubles with min/maxZoom from our layer group, see https://github.com/Leaflet/Leaflet/issues/6557
-  let minMaxZoomLayer = L.gridLayer({
+	// avoid troubles with min/maxZoom from our layer group, see https://github.com/Leaflet/Leaflet/issues/6557
+	let minMaxZoomLayer = L.gridLayer({
     minZoom: 0,
     maxZoom: 19
   });
@@ -760,13 +794,13 @@ function loadLeaflet() {
   });
   let cyclosm = L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
     minZoom: 0,
-    maxZoom: 18,
-    attribution: '&copy; <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> contributors | <a href="https://www.cyclosm.org" target="_blank">CyclOSM</a> | <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap Frankreich</a>.'
-  });
-  let empty = L.tileLayer('', { attribution: '' });
+		maxZoom: 18,
+		attribution: '&copy; <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> contributors | <a href="https://www.cyclosm.org" target="_blank">CyclOSM</a> | <a href="https://openstreetmap.fr/" target="_blank">OpenStreetMap Frankreich</a>.'
+	});
+	let empty = L.tileLayer('', { attribution: '' });
 
-  /*let osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    minZoom: 0,
+	/*let osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		minZoom: 0,
     maxZoom: 18,
     attribution: 'map data &amp; imagery &copy; <a href="https://openstreetmap.org" target="_blank">OpenStreetMap</a> contributors'
   });*/
@@ -792,8 +826,8 @@ function loadLeaflet() {
   // rkGlobal.poiLayers.problemLayerActive.addTo(rkGlobal.leafletMap);
   L.control.layers(baseMaps, overlayMaps, { 'position': 'topright', 'collapsed': true }).addTo(rkGlobal.leafletMap);
 
-  rkGlobal.leafletMap.on({
-    overlayadd: function (e) {
+	rkGlobal.leafletMap.on({
+		overlayadd: function (e) {
       let configuration = rkGlobal.configurations[rkGlobal.currentRegion];
       if (e.layer === rkGlobal.poiLayers.bikeShareLayer) {
         clearAndLoadNextbike(configuration.nextbikeUrl);
@@ -837,7 +871,7 @@ function loadLeaflet() {
     rkGlobal.leafletMap.panInside(result.center, { "paddingTopLeft": topLeft, "paddingBottomRight": bottomRight });
   }).addTo(rkGlobal.leafletMap);
 
-  L.control.locate({
+	L.control.locate({
     position: 'topright',
     setView: 'untilPan',
     flyTo: true,
@@ -849,15 +883,15 @@ function loadLeaflet() {
     },
     strings: {
       title: 'Verfolge Position'
-    }
-  }).addTo(rkGlobal.leafletMap);
+		}
+	}).addTo(rkGlobal.leafletMap);
 
   L.control.zoom({ position: 'topright' }).addTo(rkGlobal.leafletMap);
 
   L.control.scale({ position: 'topleft', imperial: false, maxWidth: 200 }).addTo(rkGlobal.leafletMap);
 
-  let sidebar = L.control.sidebar({
-    container: 'sidebar',
+	let sidebar = L.control.sidebar({
+		container: 'sidebar',
     position: 'left'
   }).addTo(rkGlobal.leafletMap);
   if (window.innerWidth < rkGlobal.fullWidthThreshold) {
@@ -944,6 +978,8 @@ function initializeIcons() {
   rkGlobal.icons.citybikelinzGray = createMarkerIcon('css/citybikelinz-gray.svg');
   rkGlobal.icons.bicycleShop = createMarkerIcon('css/bicycleShop.svg');
   rkGlobal.icons.bicycleShopGray = createMarkerIcon('css/bicycleShop-gray.svg');
+  rkGlobal.icons.partnerBicycleShop = createMarkerIcon('css/partnerBicycleShop.svg', 4);
+  rkGlobal.icons.partnerBicycleShopGray = createMarkerIcon('css/partnerBicycleShop-gray.svg', 4);
   rkGlobal.icons.bicycleRepairStation = createMarkerIcon('css/bicycleRepairStation.svg');
   rkGlobal.icons.bicycleRepairStationGray = createMarkerIcon('css/bicycleRepairStation-gray.svg');
   rkGlobal.icons.bicyclePump = createMarkerIcon('css/bicyclePump.svg');
@@ -954,9 +990,9 @@ function initializeIcons() {
   rkGlobal.icons.drinkingWaterGray = createMarkerIcon('css/drinkingWater-gray.svg');
 }
 
-function createMarkerIcon(url) {
-  let markerWidth = 100 / 5;
-  let markerHeight = 150 / 5;
+function createMarkerIcon(url, sizeFactor = 5) {
+  let markerWidth = 100 / sizeFactor;
+  let markerHeight = 150 / sizeFactor;
   return L.icon({
     iconUrl: url,
     iconSize: [markerWidth, markerHeight],

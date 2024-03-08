@@ -209,6 +209,33 @@ ul.legend li img {
   color: dimgray;
 }
 
+.leaflet-popup-content .rl-partner {
+	margin: 16px 0;
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+}
+
+.leaflet-popup-content .rl-partner a {
+	display: contents;
+}
+
+.leaflet-popup-content .rl-partner a:hover {
+	background: none !important;
+	color: black !important;
+}
+
+.leaflet-popup-content .rl-partner img {
+	height: 30px;
+	margin-right: 16px;
+}
+
+.leaflet-popup-content .rl-partner em {
+	display: block;
+	height: 30px;
+	vertical-align: center;
+}
+
 span.transitLine {
   color: #fff;
   font-weight: bold;

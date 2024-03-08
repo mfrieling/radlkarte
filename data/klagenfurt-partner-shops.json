@@ -1,0 +1,61 @@
+{
+  "name": "Partnershops in the Klagenfurt region",
+  "items": [
+    {
+      "osm_id": 93808988,
+      "name": "Gigasport Klagenfurt",
+      "url": "https://gigasport.at/standorte/",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#gigasport"
+    },
+    {
+      "osm_id": 2194127567,
+      "name": "Gigasport Villach",
+      "url": "https://gigasport.at/standorte/",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#gigasport"
+    },
+    {
+      "osm_id": 3979448086,
+      "name": "Radldoktor",
+      "url": "https://radldoktor-moosburg.at/",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#p06"
+    },
+    {
+      "osm_id": 1487926922,
+      "name": "Zweirad Beinl",
+      "url": "https://www.beinlzweirad.at/",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#p07"
+    },
+    {
+      "osm_id": 767116984,
+      "name": "Mountainbiker",
+      "url": "https://mountainbikerklagenfurt.at/",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#p08"
+    },
+    {
+      "osm_id": 229646862,
+      "info": "Gebäude 1",
+      "name": "Kraftbike",
+      "url": "https://www.kraftbike.com/",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#p09"
+    },
+    {
+      "osm_id": 229646858,
+      "info": "Gebäude 2",
+      "name": "Kraftbike",
+      "url": "https://www.kraftbike.com/",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#p09"
+    },
+    {
+      "osm_id": 17319882,
+      "name": "Krois Kühnsdorf",
+      "url": "https://www.kroiskuehnsdorf.com/fahrraumlder.html",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#p10"
+    },
+    {
+      "osm_id": 9104869792,
+      "name": "GS RAD",
+      "url": "http://www.gsrad.at/",
+      "rl_url": "https://www.radlobby.at/kaernten/partnerbetriebe#p11"
+    }
+  ]
+}

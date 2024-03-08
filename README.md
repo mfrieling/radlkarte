@@ -69,6 +69,7 @@ Obviously this excludes the libraries [leaflet (BSD 2-Clause)](https://leafletjs
 Other exceptions:
 - railway icon based on https://de.m.wikipedia.org/wiki/Datei:Train_Austria.svg
 - bicycle shop icon based on cart by Alfa Design from <a href="https://thenounproject.com/browse/icons/term/cart/" target="_blank" title="cart Icons">Noun Project</a> (CC BY 3.0)
+- partner bicycle shop icon based on bicycle by Myly from <a href="https://thenounproject.com/browse/collection-icon/bike-collection-29725/" target="_blank" title="bicycle Icon">Noun Project</a> (CC BY 3.0)
 - bicycle repair station icon based on icon taken from the [OpenStreetMap-carto](https://github.com/gravitystorm/openstreetmap-carto) style licensed under CC0 public domain
 - bicycle tube vending icon based on icon taken from https://github.com/cyclosm/cyclosm-cartocss-style licensed under BSD-3-Clause license
 - bicycle pump icon based on icon from https://github.com/osmandapp/OsmAnd-resources
