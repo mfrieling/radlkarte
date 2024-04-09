@@ -56,7 +56,7 @@ rkGlobal.configurations = {
   },
   'klagenfurt': {
     title: 'Klagenfurt',
-    centerLatLng: L.latLng(46.62, 14.31),
+    centerLatLng: L.latLng(46.62, 14.28),
     nextbikeUrl: 'https://maps.nextbike.net/maps/nextbike.json?domains=ka&bikes=false'
   },
   'linz': {
